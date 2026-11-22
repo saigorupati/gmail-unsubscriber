@@ -32,6 +32,20 @@ class Sender:
     acknowledged_at: int | None
 
 
+@dataclass
+class SenderRow:
+    sender: Sender
+    count_30d: int
+    count_total: int
+    method: Method
+
+
+@dataclass
+class StillSendingRow:
+    sender: Sender
+    count_since: int
+
+
 @dataclass(frozen=True)
 class UnsubOptions:
     https_urls: list[str]
