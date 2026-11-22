@@ -33,6 +33,31 @@ def make_meta(
     )
 
 
+class FakeGmailClient:
+    """In-memory GmailClient. Honors an `after:<epoch>` term in queries."""
+
+    def __init__(self, messages: list[MessageMeta], fail_after: int | None = None):
+        self.messages = {m.id: m for m in messages}
+        self.fail_after = fail_after
+        self.returned = 0
+        self.queries: list[str] = []
+
+    def list_message_ids(self, query: str):
+        self.queries.append(query)
+        after = 0
+        for term in query.split():
+            if term.startswith("after:"):
+                after = int(term[len("after:"):])
+        return iter([m.id for m in self.messages.values() if m.date > after])
+
+    def get_metadata(self, ids: list[str]) -> list[MessageMeta]:
+        if self.fail_after is not None and self.returned >= self.fail_after:
+            raise RuntimeError("boom")
+        out = [self.messages[i] for i in ids if i in self.messages]
+        self.returned += len(out)
+        return out
+
+
 @pytest.fixture
 def now() -> datetime:
     return NOW
