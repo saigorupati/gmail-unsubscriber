@@ -94,8 +94,9 @@ The owner picked option 1.
 - For each message, fetch metadata only (`format=metadata`) with the headers
   `From`, `Date`, `List-Unsubscribe`, `List-Unsubscribe-Post`, plus the
   thread ID. Bodies are never downloaded. Use batch requests within the quota.
-- **First scan:** full history, with a progress bar (n of N). Saves progress
-  as it goes so a closed window or crash resumes where it stopped.
+- **First scan:** the past 30 days only (`FIRST_SCAN_DAYS`; changed from full
+  history at the owner's request on 2026-11-22), with a progress bar (n of N).
+  Saves progress as it goes so a closed window or crash resumes where it stopped.
 - **Later scans:** only messages newer than the last completed scan. Using
   Gmail's `history` API or an `after:` date query is the builder's call.
 - A "Scan now" button starts a scan, and the page shows when the last scan ran.

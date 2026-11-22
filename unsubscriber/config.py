@@ -7,6 +7,7 @@ DB_PATH = ROOT / "unsubscriber.db"
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
+FIRST_SCAN_DAYS = 30  # the first scan only reads this much history
 RANK_DAYS = 30
 REVIEW_WINDOW_DAYS = 90
 GRACE_DAYS = 10

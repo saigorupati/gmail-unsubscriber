@@ -38,9 +38,9 @@ py -3.13 -m venv .venv
 
 Your browser opens the app.
 
-1. Click **Scan now**. The first scan reads your whole mailbox and can take 10–20 minutes for a
-   large one. If it stops partway, click Scan again and it picks up where it left off. Later scans
-   only read new mail.
+1. Click **Scan now**. The first scan reads the past 30 days of mail (change `FIRST_SCAN_DAYS`
+   in `unsubscriber/config.py` to go further back). If it stops partway, click Scan again and it
+   picks up where it left off. Later scans only read mail that arrived since the last scan.
 2. Tick the senders you're done with, then click **Unsubscribe selected**.
    - **One-click** senders are handled immediately.
    - Others show up under **Finish these**. Click each one to open the sender's unsubscribe page

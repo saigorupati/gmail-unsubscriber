@@ -8,6 +8,7 @@ from datetime import datetime
 
 from . import db, review
 from .auth import AuthRequired
+from .config import FIRST_SCAN_DAYS
 from .gmail_client import GmailClient
 
 BASE_QUERY = "-in:sent -in:draft"  # spam/trash excluded via includeSpamTrash=False
@@ -25,10 +26,10 @@ class ScanProgress:
     auth_required: bool = False
 
 
-def build_query(conn: sqlite3.Connection) -> str:
+def build_query(conn: sqlite3.Connection, now: datetime) -> str:
     last = db.get_state(conn, "last_completed")
     if last is None:
-        return BASE_QUERY
+        return f"{BASE_QUERY} after:{int(now.timestamp()) - FIRST_SCAN_DAYS * 86400}"
     return f"{BASE_QUERY} after:{int(last) - OVERLAP_SECONDS}"
 
 
@@ -41,7 +42,7 @@ def run_scan(conn: sqlite3.Connection, client: GmailClient, now: datetime, progr
         # Only senders that were on the page after the last *completed* scan can be
         # skipped; senders found by an interrupted attempt haven't been reviewed yet.
         shown = set(json.loads(db.get_state(conn, "reviewable_after_last_scan") or "[]"))
-        ids = list(client.list_message_ids(build_query(conn)))
+        ids = list(client.list_message_ids(build_query(conn, now)))
         known = db.known_ids(conn, ids)
         todo = [i for i in ids if i not in known]
         progress.total = len(todo)

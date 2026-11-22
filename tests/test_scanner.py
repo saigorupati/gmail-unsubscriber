@@ -8,7 +8,7 @@ from .conftest import FakeGmailClient, make_meta
 
 
 def test_first_scan_records_everything(conn, now):
-    msgs = [make_meta(str(i), days_ago=i, now=now) for i in range(250)]
+    msgs = [make_meta(str(i), days_ago=i / 10, now=now) for i in range(250)]  # all within 25 days
     p = ScanProgress()
     run_scan(conn, FakeGmailClient(msgs), now, p)
     assert (p.done, p.total, p.new_messages, p.error, p.running) == (250, 250, 250, None, False)
@@ -41,10 +41,12 @@ def test_incremental_uses_after_query(conn, now):
     assert client.queries[-1] == f"-in:sent -in:draft after:{int(now.timestamp()) - 86400}"
 
 
-def test_first_query_has_no_after(conn, now):
-    client = FakeGmailClient([])
+def test_first_scan_only_reads_past_30_days(conn, now):
+    msgs = [make_meta("recent", days_ago=10, now=now), make_meta("old", days_ago=45, now=now)]
+    client = FakeGmailClient(msgs)
     run_scan(conn, client, now, ScanProgress())
-    assert client.queries == ["-in:sent -in:draft"]
+    assert client.queries == [f"-in:sent -in:draft after:{int(now.timestamp()) - 30 * 86400}"]
+    assert count_messages(conn, "news@promo.com") == 1
 
 
 def test_undecided_become_skipped_after_next_scan(conn, now):
