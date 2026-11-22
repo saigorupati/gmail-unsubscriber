@@ -1,6 +1,7 @@
 """Full and incremental scans. Every chunk is committed, so an interrupted
 scan resumes by re-listing and skipping messages already stored."""
 
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
@@ -37,7 +38,9 @@ def run_scan(conn: sqlite3.Connection, client: GmailClient, now: datetime, progr
     progress.auth_required = False
     progress.done = progress.total = progress.new_messages = 0
     try:
-        shown = review.review_addresses(conn, now)
+        # Only senders that were on the page after the last *completed* scan can be
+        # skipped; senders found by an interrupted attempt haven't been reviewed yet.
+        shown = set(json.loads(db.get_state(conn, "reviewable_after_last_scan") or "[]"))
         ids = list(client.list_message_ids(build_query(conn)))
         known = db.known_ids(conn, ids)
         todo = [i for i in ids if i not in known]
@@ -52,6 +55,9 @@ def run_scan(conn: sqlite3.Connection, client: GmailClient, now: datetime, progr
         review.revive_skipped(conn, now)
         db.set_state(conn, "last_completed", str(int(now.timestamp())))
         db.set_state(conn, "last_new_messages", str(progress.new_messages))
+        db.set_state(
+            conn, "reviewable_after_last_scan", json.dumps(sorted(review.review_addresses(conn, now)))
+        )
     except AuthRequired as e:
         progress.auth_required = True
         progress.error = str(e) or "Google sign-in expired"

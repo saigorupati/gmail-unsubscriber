@@ -33,6 +33,7 @@ def make_app(tmp_path, creds=True, seed=(), client=None, factory=None, post=None
         client_factory=factory or (lambda: client),
         post=post or (lambda u: (True, None)),
         now_fn=lambda: NOW,
+        allowed_hosts={"localhost"},
     )
     app.testing = True
     return app
@@ -128,3 +129,31 @@ def test_cross_site_post_rejected(tmp_path, now):
     assert c.post("/api/unsubscribe", data="addresses=news@promo.com", headers=H).status_code == 403
     assert c.post("/api/unsubscribe", json=payload).status_code == 403  # no Origin
     assert calls == []
+
+
+def test_foreign_host_header_rejected(tmp_path, now):
+    """DNS-rebinding: a page on another domain reaching 127.0.0.1 sends its own Host."""
+    calls = []
+    c = make_app(tmp_path, seed=[make_meta("1", now=now)], post=lambda u: calls.append(u) or (True, None)).test_client()
+    evil = {"Host": "evil.example:5000", "Origin": "http://evil.example:5000"}
+    assert c.get("/", headers={"Host": "evil.example:5000"}).status_code == 403
+    assert c.post("/api/unsubscribe", json={"addresses": ["news@promo.com"]}, headers=evil).status_code == 403
+    assert calls == []
+
+
+def test_signin_shown_after_scan_hits_auth_error(tmp_path):
+    class Expired(FakeGmailClient):
+        def list_message_ids(self, q):
+            raise AuthRequired("expired")
+
+    c = make_app(tmp_path, client=Expired([])).test_client()
+    c.post("/api/scan", json={}, headers=H)
+    wait_until(lambda: not c.get("/api/scan").json["running"])
+    assert b"Sign in with Google" in c.get("/").data
+
+
+def test_offline_shows_message_not_500(tmp_path):
+    from google.auth.exceptions import TransportError
+
+    r = make_app(tmp_path, factory=raises(TransportError)).test_client().get("/")
+    assert r.status_code == 200 and b"reach Google" in r.data

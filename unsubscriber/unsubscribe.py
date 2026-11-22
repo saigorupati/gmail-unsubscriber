@@ -32,7 +32,7 @@ def one_click_post(url: str, timeout: float = ONE_CLICK_TIMEOUT) -> tuple[bool, 
             data="List-Unsubscribe=One-Click",
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=timeout,
-            allow_redirects=True,
+            allow_redirects=False,  # following would turn the POST into an automatic GET
         )
     except requests.ConnectTimeout:  # Windows reports refused connections this way
         return False, "Could not connect"
@@ -44,6 +44,8 @@ def one_click_post(url: str, timeout: float = ONE_CLICK_TIMEOUT) -> tuple[bool, 
         return False, f"Request failed: {type(e).__name__}"
     if 200 <= resp.status_code < 300:
         return True, None
+    if 300 <= resp.status_code < 400:
+        return False, f"Redirected (HTTP {resp.status_code})"
     return False, f"HTTP {resp.status_code}"
 
 

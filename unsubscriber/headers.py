@@ -21,7 +21,12 @@ def parse_from(value: str | None) -> tuple[str, str] | None:
     """Return (display_name, lowercased address) or None if no usable address."""
     if not value:
         return None
-    name, address = parseaddr(_decode(value))
+    # Split the raw header first, then decode only the name: decoded names may
+    # contain commas or angle brackets that would confuse the address parser.
+    name, address = parseaddr(value)
+    if "@" not in address:
+        name, address = parseaddr(_decode(value))
+    name = _decode(name)
     address = address.strip().lower()
     if "@" not in address or address.startswith("@") or address.endswith("@"):
         return None

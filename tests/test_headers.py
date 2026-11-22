@@ -75,3 +75,11 @@ def test_compose_url_without_subject():
 
 def test_thread_url():
     assert gmail_thread_url("abc") == "https://mail.google.com/mail/u/0/#all/abc"
+
+
+def test_parse_from_encoded_name_with_comma():
+    assert parse_from("=?UTF-8?B?RG9lLCBKb2hu?= <a@b.com>") == ("Doe, John", "a@b.com")
+
+
+def test_parse_from_encoded_name_with_angle_brackets():
+    assert parse_from("=?UTF-8?Q?Shop_=3Cdeals=3E?= <a@b.com>") == ("Shop <deals>", "a@b.com")

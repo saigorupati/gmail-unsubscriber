@@ -16,6 +16,7 @@ class Stub:
         self.status = 200
         self.delay = 0.0
         self.last = None
+        self.location = None
         stub = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -24,6 +25,8 @@ class Stub:
                 stub.last = ("POST", body, self.headers.get("Cookie"))
                 time.sleep(stub.delay)
                 self.send_response(stub.status)
+                if stub.location:
+                    self.send_header("Location", stub.location)
                 self.send_header("Content-Length", "0")
                 self.end_headers()
 
@@ -135,3 +138,11 @@ def test_no_header_opens_thread(conn, now):
     record_message(conn, make_meta("new", days_ago=1, now=now, unsub=None, post=None, thread="tLatest"))
     [r] = unsubscribe(conn, ["news@promo.com"], now, post=ok)
     assert (r.outcome, r.method, r.action_url) == ("manual", "none", "https://mail.google.com/mail/u/0/#all/tLatest")
+
+
+def test_one_click_redirect_is_not_followed(stub):
+    stub.status = 302
+    stub.location = "/elsewhere"
+    ok, err = one_click_post(stub.url("/u"))
+    assert (ok, err) == (False, "Redirected (HTTP 302)")
+    assert stub.last[0] == "POST"  # no follow-up GET was sent

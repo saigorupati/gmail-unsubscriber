@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Callable
 
+from google.auth.exceptions import TransportError
 from flask import Flask, abort, g, jsonify, render_template, request
 
 from . import auth, db, review
@@ -49,7 +50,11 @@ def create_app(
     post: PostFn = one_click_post,
     now_fn: Callable[[], datetime] = lambda: datetime.now(UTC),
     sign_in_fn: Callable[[Path, Path], object] = auth.sign_in,
+    *,
+    allowed_hosts: set[str],
 ) -> Flask:
+    """allowed_hosts: exact Host header values to accept (e.g. {"127.0.0.1:5123"}).
+    Checking them on every request blocks DNS-rebinding pages."""
     app = Flask(__name__)
     progress = ScanProgress()
     scan_lock = threading.Lock()
@@ -67,10 +72,12 @@ def create_app(
 
     @app.before_request
     def _guard():
+        if request.host not in allowed_hosts:
+            abort(403)
         if request.method != "POST":
             return
         origin = request.headers.get("Origin")
-        if not request.is_json or origin != request.host_url.rstrip("/"):
+        if not request.is_json or origin != f"http://{request.host}":
             abort(403)
 
     def body() -> dict:
@@ -97,10 +104,18 @@ def create_app(
     def index():
         if not Path(credentials_path).exists():
             return render_template("setup.html")
+        if progress.auth_required and not progress.running:
+            return render_template("signin.html")
         try:
             client_factory()
         except AuthRequired:
             return render_template("signin.html")
+        except TransportError:
+            return render_template(
+                "message.html",
+                title="Can't reach Google",
+                text="Couldn't reach Google to check your sign-in. Check your internet connection and reload.",
+            )
         now = now_fn()
         c = conn()
         last = db.get_state(c, "last_completed")
@@ -120,6 +135,8 @@ def create_app(
     @app.post("/api/signin")
     def api_signin():
         sign_in_fn(credentials_path, token_path)
+        progress.auth_required = False
+        progress.error = None
         return jsonify(ok=True)
 
     def _scan_worker():

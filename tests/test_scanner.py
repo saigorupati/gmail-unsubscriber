@@ -71,3 +71,24 @@ def test_auth_failure_reported(conn, now):
     p = ScanProgress()
     run_scan(conn, Expired([]), now, p)
     assert p.auth_required and not p.running and p.error
+
+
+def test_resumed_first_scan_does_not_skip_unreviewed_senders(conn, now):
+    msgs = [make_meta(str(i), frm=f"S{i} <s{i}@x.com>", now=now) for i in range(250)]
+    run_scan(conn, FakeGmailClient(msgs, fail_after=100), now, ScanProgress())
+    p = ScanProgress()
+    run_scan(conn, FakeGmailClient(msgs), now, p)
+    assert p.error is None
+    assert get_sender(conn, "s0@x.com").status == "new"
+
+
+def test_retried_monthly_scan_does_not_skip_new_senders(conn, now):
+    run_scan(conn, FakeGmailClient([make_meta("1", now=now)]), now, ScanProgress())
+    later = now + timedelta(days=30)
+    msgs = [make_meta("1", now=now)] + [
+        make_meta(f"n{i}", frm=f"N{i} <n{i}@y.com>", days_ago=-29, now=now) for i in range(150)
+    ]
+    run_scan(conn, FakeGmailClient(msgs, fail_after=100), later, ScanProgress())  # fails part-way
+    run_scan(conn, FakeGmailClient(msgs), later, ScanProgress())  # retry succeeds
+    assert get_sender(conn, "n0@y.com").status == "new"  # found during this month's scans
+    assert get_sender(conn, "news@promo.com").status == "skipped"  # shown last month, undecided

@@ -17,13 +17,14 @@ def _free_port() -> int:
 
 
 def main() -> None:
+    port = _free_port()
     app = create_app(
         db_path=DB_PATH,
         credentials_path=CREDENTIALS_PATH,
         token_path=TOKEN_PATH,
         client_factory=lambda: RealGmailClient(load_credentials(CREDENTIALS_PATH, TOKEN_PATH)),
+        allowed_hosts={f"127.0.0.1:{port}", f"localhost:{port}"},
     )
-    port = _free_port()
     url = f"http://127.0.0.1:{port}/"
     print(f"Unsubscriber running at {url}  (press Ctrl+C to stop)")
     threading.Timer(1.0, webbrowser.open, args=(url,)).start()
