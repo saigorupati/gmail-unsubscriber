@@ -1,7 +1,24 @@
-# Unsubscriber
+# Gmail Unsubscriber
+
+[![tests](https://github.com/saigorupati/gmail-unsubscriber/actions/workflows/tests.yml/badge.svg)](https://github.com/saigorupati/gmail-unsubscriber/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)
 
 A small app that runs on your own computer. Once a month, it scans your Gmail, shows which
 mailing lists send you the most mail, and unsubscribes you from the ones you tick.
+
+![The review page: mailing lists ranked by recent volume, with checkboxes and unsubscribe methods](docs/images/screenshot.png)
+
+## Features
+
+- **Ranked by recent volume.** The mailing lists that sent the most in the last 30 days are at the top.
+- **Bulk unsubscribe.** Most senders support one-click unsubscribe ([RFC 8058](https://www.rfc-editor.org/rfc/rfc8058)),
+  so the app handles them instantly. For the rest, it opens the sender's page or a pre-filled Gmail draft.
+- **Catches senders who ignore you.** A "Still sending" section flags lists that keep emailing
+  more than 10 days after you unsubscribed.
+- **Fast monthly check-ins.** After the first scan, it only reads new mail.
+
+## Privacy
 
 - **Read-only.** The app only asks Google for permission to *read* your mail. It can't delete,
   move, label, or send anything.
@@ -67,3 +84,21 @@ weekly.
 ```powershell
 .venv\Scripts\python -m pytest
 ```
+
+## How it works
+
+| Part | File |
+|---|---|
+| Reads email headers (sender, `List-Unsubscribe`) | `unsubscriber/headers.py` |
+| Local SQLite storage | `unsubscriber/db.py` |
+| What shows up for review, skipping, "still sending" | `unsubscriber/review.py` |
+| Gmail API access (read-only, batched, rate-limited) | `unsubscriber/gmail_client.py` |
+| Full and incremental scans | `unsubscriber/scanner.py` |
+| One-click POST and manual unsubscribe links | `unsubscriber/unsubscribe.py` |
+| Local web page and API (`127.0.0.1` only) | `unsubscriber/web.py` |
+
+The design doc is in [`docs/superpowers/specs`](docs/superpowers/specs).
+
+## License
+
+[MIT](LICENSE)
