@@ -3,7 +3,7 @@
 import re
 from email.header import decode_header, make_header
 from email.utils import parseaddr
-from urllib.parse import parse_qs, unquote, urlencode, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlsplit
 
 from .models import Method, UnsubOptions
 
@@ -81,3 +81,7 @@ def gmail_compose_url(mailto: str) -> str:
 
 def gmail_thread_url(thread_id: str) -> str:
     return f"https://mail.google.com/mail/u/0/#all/{thread_id}"
+
+
+def gmail_search_url(address: str) -> str:
+    return "https://mail.google.com/mail/u/0/#search/" + quote(f"from:{address}", safe="")

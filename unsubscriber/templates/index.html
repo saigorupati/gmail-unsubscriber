@@ -15,15 +15,21 @@
 </div>
 <div id="error" class="error" hidden></div>
 
-<section id="finish" class="card" hidden>
-  <h2>Finish these</h2>
-  <p class="muted">These need you to click through. Once you're done with one, it counts as unsubscribed.</p>
-  <ul id="finish-list" class="finish-list"></ul>
+<section class="card intro" id="intro">
+  <button class="close" id="intro-close" aria-label="Hide this help">×</button>
+  <h2>How this works</h2>
+  <ol>
+    <li><strong>Scan</strong> to find mailing lists that have emailed you recently. Your mail is only read, never changed.</li>
+    <li><strong>Tick</strong> the ones you're done with (click anywhere on a row), then <strong>Unsubscribe</strong>.
+        Use <strong>Keep</strong> for ones you want.</li>
+    <li>Anything you leave unticked is <strong>skipped</strong> after your next scan, and only comes back if it starts sending more.</li>
+  </ol>
 </section>
 
 {% if still %}
 <section class="card warn">
   <h2>Still sending after unsubscribe</h2>
+  <p class="hint">These kept emailing you more than 10 days after you unsubscribed. Try again, or block them in Gmail and hide them here.</p>
   <table>
     <tbody>
     {% for r in still %}
@@ -31,10 +37,10 @@
         <td><div class="name">{{ r.sender.display_name }}</div><div class="addr">{{ r.sender.address }}</div></td>
         <td class="num">{{ r.count_since }} since {{ fmt_date(r.sender.status_at) }}</td>
         <td class="actions">
-          <a href="https://mail.google.com/mail/u/0/#all/{{ r.sender.latest_thread_id }}" target="_blank" rel="noopener">Open in Gmail</a>
-          <button data-action="retry">Retry</button>
-          <button data-action="hide">Hide</button>
-          <button data-action="keep-one">Keep</button>
+          <a href="{{ gmail_search_url(r.sender.address) }}" target="_blank" rel="noopener">View emails</a>
+          <button data-action="retry" title="Try unsubscribing again">Retry</button>
+          <button data-action="hide" title="Hide until they email you again">Hide</button>
+          <button data-action="keep-one" title="Stop tracking; you want these emails">Keep</button>
         </td>
       </tr>
     {% endfor %}
@@ -44,42 +50,65 @@
 {% endif %}
 
 <section class="card">
-  <h2>To review <span class="count">{{ rows|length }}</span></h2>
+  <div class="section-head">
+    <h2>To review <span class="count">{{ rows|length }}</span></h2>
+    {% if rows %}<input type="search" id="search" placeholder="Search senders…" aria-label="Search senders">{% endif %}
+  </div>
   {% if rows %}
+  <p class="hint">Click a row to select it. Hover a badge to see what happens when you unsubscribe.</p>
   <table id="review">
     <thead>
       <tr>
-        <th><input type="checkbox" id="select-all" aria-label="Select all"></th>
-        <th>Sender</th><th class="num">30 days</th><th class="num">All time</th><th>Last seen</th><th>Method</th>
+        <th><input type="checkbox" id="select-all" aria-label="Select all" title="Select all"></th>
+        <th class="sortable" data-sort="name">Sender</th>
+        <th class="num sortable sorted-desc" data-sort="c30" title="Emails in the last 30 days">Last 30 days</th>
+        <th class="num sortable" data-sort="total" title="All emails found from this sender">Total</th>
+        <th class="sortable" data-sort="last">Last seen</th>
+        <th>How it unsubscribes</th>
       </tr>
     </thead>
     <tbody>
     {% for r in rows %}
-      <tr data-address="{{ r.sender.address }}">
+      <tr data-address="{{ r.sender.address }}" data-name="{{ r.sender.display_name|lower }} {{ r.sender.address }}"
+          data-c30="{{ r.count_30d }}" data-total="{{ r.count_total }}" data-last="{{ r.sender.latest_date }}" data-method="{{ r.method }}">
         <td><input type="checkbox" class="pick" aria-label="Select {{ r.sender.address }}"></td>
-        <td><div class="name">{{ r.sender.display_name }}</div><div class="addr">{{ r.sender.address }}</div>
+        <td><div class="name">{{ r.sender.display_name }}</div>
+          <div class="addr">{{ r.sender.address }} · <a href="{{ gmail_search_url(r.sender.address) }}" target="_blank" rel="noopener">View emails</a></div>
           {% if r.sender.last_error %}<div class="row-error">Last try failed: {{ r.sender.last_error }}</div>{% endif %}
           <div class="result"></div></td>
         <td class="num">{{ r.count_30d }}</td>
         <td class="num muted">{{ r.count_total }}</td>
         <td>{{ ago(r.sender.latest_date) }}</td>
-        <td><span class="badge badge-{{ r.method }}">{{ method_label(r.method) }}</span></td>
+        <td><span class="badge badge-{{ r.method }}" title="{{ method_help(r.method) }}">{{ method_label(r.method) }}</span></td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
-  <div class="bulk">
+  <p class="muted" id="no-matches" hidden>No senders match your search.</p>
+
+  <div class="bulk" id="bulk">
+    <span class="muted" id="sel-count">Nothing selected</span>
+    <button id="keep-btn" disabled title="You want these emails; they won't be shown again">Keep selected</button>
     <button class="primary" id="unsub-btn" disabled>Unsubscribe selected</button>
-    <button id="keep-btn" disabled>Keep selected</button>
   </div>
+
+  <section id="finish" class="finish" hidden>
+    <h3>Finish these</h3>
+    <p class="hint">These senders need one click from you. Each button opens in a new tab.</p>
+    <ul id="finish-list" class="finish-list"></ul>
+  </section>
   {% else %}
   <p class="muted">Nothing new to review.{% if not last_scan %} Click <strong>Scan now</strong> to get started.{% endif %}</p>
   {% endif %}
 </section>
 
-{% for title, list in [("Kept", kept), ("Unsubscribed", unsubscribed), ("Skipped", skipped)] %}
+{% for title, list, help in [
+    ("Kept", kept, "Lists you chose to keep. They won't show up for review again."),
+    ("Unsubscribed", unsubscribed, "Lists you've unsubscribed from. If they keep emailing, they'll appear under “Still sending”."),
+    ("Skipped", skipped, "Lists you left unticked. They come back only if they start sending more.")] %}
 <details class="card">
   <summary>{{ title }} <span class="count">{{ list|length }}</span></summary>
+  <p class="hint">{{ help }}</p>
   {% if list %}
   <table>
     <tbody>
@@ -88,7 +117,7 @@
         <td><div class="name">{{ r.sender.display_name }}</div><div class="addr">{{ r.sender.address }}</div></td>
         <td class="num">{{ r.count_30d }} in 30 days</td>
         <td class="muted">{{ fmt_date(r.sender.status_at) }}</td>
-        <td class="actions"><button data-action="undo">Undo</button></td>
+        <td class="actions"><button data-action="undo" title="Move back to To review">Undo</button></td>
       </tr>
     {% endfor %}
     </tbody>
@@ -96,4 +125,15 @@
   {% else %}<p class="muted">None yet.</p>{% endif %}
 </details>
 {% endfor %}
+
+<dialog id="confirm-dialog">
+  <form method="dialog">
+    <h3 id="confirm-title">Unsubscribe?</h3>
+    <ul id="confirm-body"></ul>
+    <div class="dialog-actions">
+      <button value="cancel">Cancel</button>
+      <button value="ok" class="primary" id="confirm-ok">Unsubscribe</button>
+    </div>
+  </form>
+</dialog>
 {% endblock %}

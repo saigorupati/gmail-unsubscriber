@@ -83,3 +83,9 @@ def test_parse_from_encoded_name_with_comma():
 
 def test_parse_from_encoded_name_with_angle_brackets():
     assert parse_from("=?UTF-8?Q?Shop_=3Cdeals=3E?= <a@b.com>") == ("Shop <deals>", "a@b.com")
+
+
+def test_search_url():
+    from unsubscriber.headers import gmail_search_url
+
+    assert gmail_search_url("news@promo.com") == "https://mail.google.com/mail/u/0/#search/from%3Anews%40promo.com"

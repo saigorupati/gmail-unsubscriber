@@ -10,6 +10,8 @@
   --bad: #c2372b;
   --warn-bg: #fff8eb;
   --warn-line: #f1d49b;
+  --hover: #f1f3f7;
+  --selected: #e8eeff;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -25,6 +27,8 @@
     --bad: #ff7b6e;
     --warn-bg: #2a2416;
     --warn-line: #5c4a22;
+    --hover: #232731;
+    --selected: #1f2a4a;
   }
 }
 
@@ -74,6 +78,7 @@ button {
 button:hover:not(:disabled) { border-color: var(--muted); }
 button:disabled { opacity: .5; cursor: default; }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+button.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font-size: inherit; }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 9px 8px; border-top: 1px solid var(--line); vertical-align: top; }
@@ -83,27 +88,82 @@ th:first-child, td:first-child { width: 1%; }
 .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .name { font-weight: 600; }
 .addr { color: var(--muted); font-size: 13px; word-break: break-all; }
+.addr a { color: var(--muted); }
+.addr a:hover { color: var(--accent); }
 .actions { text-align: right; white-space: nowrap; }
 .actions > * { margin-left: 6px; }
 tr.done { opacity: .55; }
 .result { font-size: 13px; margin-top: 2px; }
 .result:empty { display: none; }
+.result.kept { color: var(--muted); }
 .row-error { color: var(--bad); font-size: 13px; }
 
-.badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+/* Whole-row selection in the review list */
+#review input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 4px; cursor: pointer; accent-color: var(--accent); }
+#review tbody tr:has(.pick) { cursor: pointer; user-select: none; }
+#review tbody tr:has(.pick):hover { background: var(--hover); }
+#review tbody tr:has(.pick:checked) { background: var(--selected); }
+#review tbody tr:has(.pick:checked) td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; cursor: help; }
 .badge-one_click { color: var(--ok); border-color: currentColor; }
 
-.bulk { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+/* Help & hints */
+.hint { color: var(--muted); font-size: 13px; margin: -4px 0 10px; }
+.intro { position: relative; }
+.intro ol { margin: 0; padding-left: 20px; }
+.intro li { margin-bottom: 4px; }
+.close { position: absolute; top: 8px; right: 10px; border: 0; background: none; font-size: 20px; line-height: 1; color: var(--muted); padding: 4px 8px; }
+
+/* Search & sort */
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.section-head h2 { margin: 0; }
+#search { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--text); min-width: 220px; }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--text); }
+th.sorted-desc::after { content: " \25BC"; font-size: 10px; }
+th.sorted-asc::after { content: " \25B2"; font-size: 10px; }
+
+/* Bulk action bar stays visible while scrolling a long list */
+.bulk {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px -18px -16px;
+  padding: 12px 18px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 -6px 12px -10px rgba(0, 0, 0, .35);
+  z-index: 2;
+}
+.bulk #sel-count { margin-right: auto; }
+.bulk button { padding: 9px 16px; }
 
 .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .progress .bar { flex: 1; height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
 .progress .fill { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
 .error { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--bad); padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
 
+/* Finish these */
+.finish { margin-top: 30px; padding: 14px 16px; border: 2px solid var(--accent); border-radius: 10px; }
+.finish h3 { margin: 0 0 4px; font-size: 15px; }
 .finish-list { list-style: none; padding: 0; margin: 0; }
 .finish-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .steps li { margin-bottom: 6px; }
 
+/* Confirm dialog */
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); padding: 20px 22px; max-width: 440px; width: calc(100% - 32px); }
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+dialog h3 { margin: 0 0 10px; }
+dialog ul { padding-left: 18px; margin: 0 0 16px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
 @media (max-width: 640px) {
   thead th:nth-child(4), td:nth-child(4), thead th:nth-child(5), #review td:nth-child(5) { display: none; }
+  #search { min-width: 0; width: 100%; }
 }

@@ -12,14 +12,21 @@ from flask import Flask, abort, g, jsonify, render_template, request
 from . import auth, db, review
 from .auth import AuthRequired
 from .gmail_client import GmailClient
+from .headers import gmail_search_url, gmail_thread_url
 from .scanner import ScanProgress, run_scan
 from .unsubscribe import PostFn, confirm_manual, one_click_post, retry, unsubscribe
 
 METHOD_LABELS = {
-    "one_click": "One-click",
-    "page": "Opens page",
-    "email": "Email draft",
-    "none": "Open in Gmail",
+    "one_click": "Automatic",
+    "page": "Finish on their site",
+    "email": "Send an email",
+    "none": "Find link in email",
+}
+METHOD_HELP = {
+    "one_click": "We unsubscribe you instantly. Nothing else for you to do.",
+    "page": "Opens the sender's unsubscribe page; you finish there.",
+    "email": "Opens a ready-to-send Gmail draft; you just click Send.",
+    "none": "This sender didn't include an unsubscribe option. Opens their latest email so you can find the link.",
 }
 MANUAL_METHODS = {"page", "email", "none"}
 
@@ -98,7 +105,13 @@ def create_app(
             abort(400)
         return value
 
-    app.jinja_env.globals.update(method_label=METHOD_LABELS.get, fmt_date=_fmt_date)
+    app.jinja_env.globals.update(
+        method_label=METHOD_LABELS.get,
+        method_help=METHOD_HELP.get,
+        fmt_date=_fmt_date,
+        gmail_search_url=gmail_search_url,
+        gmail_thread_url=gmail_thread_url,
+    )
 
     @app.get("/")
     def index():

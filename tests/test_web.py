@@ -60,7 +60,9 @@ def test_signin_page_when_auth_required(tmp_path):
 
 def test_index_lists_review_rows(tmp_path, now):
     body = make_app(tmp_path, seed=[make_meta("1", now=now)]).test_client().get("/").data
-    assert b"news@promo.com" in body and b"One-click" in body
+    assert b"news@promo.com" in body and b"Automatic" in body
+    assert b"https://mail.google.com/mail/u/0/#search/from%3Anews%40promo.com" in body  # View emails
+    assert b"How this works" in body
 
 
 def test_index_hides_non_lists(tmp_path, now):
