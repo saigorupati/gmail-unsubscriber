@@ -1,0 +1,109 @@
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1d2330;
+  --muted: #6b7385;
+  --line: #e4e7ec;
+  --accent: #2f5bea;
+  --accent-text: #ffffff;
+  --ok: #1f8a4c;
+  --bad: #c2372b;
+  --warn-bg: #fff8eb;
+  --warn-line: #f1d49b;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161b;
+    --card: #1d2027;
+    --text: #e7e9ee;
+    --muted: #9aa1b2;
+    --line: #2d313b;
+    --accent: #6b8cff;
+    --accent-text: #0b0d12;
+    --ok: #4cc884;
+    --bad: #ff7b6e;
+    --warn-bg: #2a2416;
+    --warn-line: #5c4a22;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+a { color: var(--accent); }
+code { background: var(--line); padding: 1px 5px; border-radius: 4px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.top h1 { font-size: 22px; margin: 0; }
+.scan { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.card h2 { font-size: 16px; margin: 0 0 10px; }
+.card.center { text-align: center; padding: 36px 18px; }
+.card.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+details.card summary { cursor: pointer; font-weight: 600; }
+details.card[open] summary { margin-bottom: 10px; }
+.count { color: var(--muted); font-weight: 400; margin-left: 4px; }
+
+.muted { color: var(--muted); }
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 9px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: 0; color: var(--muted); font-weight: 500; font-size: 13px; }
+th:first-child, td:first-child { width: 1%; }
+.card table td:first-child:has(.name) { width: auto; }
+.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.name { font-weight: 600; }
+.addr { color: var(--muted); font-size: 13px; word-break: break-all; }
+.actions { text-align: right; white-space: nowrap; }
+.actions > * { margin-left: 6px; }
+tr.done { opacity: .55; }
+.result { font-size: 13px; margin-top: 2px; }
+.result:empty { display: none; }
+.row-error { color: var(--bad); font-size: 13px; }
+
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.badge-one_click { color: var(--ok); border-color: currentColor; }
+
+.bulk { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+.progress { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.progress .bar { flex: 1; height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress .fill { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+.error { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--bad); padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+
+.finish-list { list-style: none; padding: 0; margin: 0; }
+.finish-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.steps li { margin-bottom: 6px; }
+
+@media (max-width: 640px) {
+  thead th:nth-child(4), td:nth-child(4), thead th:nth-child(5), #review td:nth-child(5) { display: none; }
+}

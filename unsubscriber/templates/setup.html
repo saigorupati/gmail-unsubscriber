@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>One-time setup</h2>
+  <p>This app reads your Gmail through your own Google Cloud project. It only ever asks for
+     <strong>read-only</strong> access. Setup takes about 10 minutes.</p>
+  <ol class="steps">
+    <li>Go to <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud Console</a> and create a project (any name).</li>
+    <li>Open <a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank" rel="noopener">Gmail API</a> and click <strong>Enable</strong>.</li>
+    <li>Open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> (OAuth consent screen). Choose <strong>External</strong>, fill in an app name and your email, and leave it in <strong>Testing</strong>.</li>
+    <li>Under <strong>Audience → Test users</strong>, add your own Gmail address.</li>
+    <li>Under <strong>Clients</strong>, create a client of type <strong>Desktop app</strong>, then download its JSON.</li>
+    <li>Rename the file to <code>credentials.json</code> and put it in the project folder (next to <code>run.ps1</code>).</li>
+    <li>Reload this page.</li>
+  </ol>
+</section>
+{% endblock %}
