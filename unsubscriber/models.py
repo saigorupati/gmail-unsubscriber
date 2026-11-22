@@ -14,6 +14,24 @@ class MessageMeta:
     list_unsubscribe_post: str | None
 
 
+@dataclass
+class Sender:
+    address: str
+    display_name: str
+    domain: str
+    is_list: bool
+    latest_date: int
+    latest_thread_id: str
+    latest_list_unsubscribe: str | None
+    latest_list_unsubscribe_post: str | None
+    status: str
+    status_at: int | None
+    method: str | None
+    last_error: str | None
+    skip_baseline: int | None
+    acknowledged_at: int | None
+
+
 @dataclass(frozen=True)
 class UnsubOptions:
     https_urls: list[str]
